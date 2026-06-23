@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ 우리 반 청소시간 가위바위보 오픈 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Nanum Gothic', sans-serif; }
+        .title-font { font-family: 'Black Han Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col justify-between text-slate-800">
+
+    <div id="loading-spinner" class="fixed inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-amber-500 mb-4"></div>
+        <p class="text-base font-bold text-slate-700" id="loading-text">데이터 동기화 중...</p>
+    </div>
+
+    <header class="bg-amber-500 text-white shadow-md py-4 px-6">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl title-font tracking-wide flex items-center gap-2">🧹 청소구역 단판 오픈 시스템</h1>
+            <div class="flex items-center gap-1.5">
+                <button id="btn-refresh" class="bg-amber-600 hover:bg-amber-700 text-xs font-bold px-2.5 py-2 rounded-lg transition shadow-sm">🔄 새로고침</button>
+                <button id="btn-admin-mode" class="bg-slate-900 hover:bg-slate-950 text-xs font-bold px-2.5 py-2 rounded-lg transition shadow-sm">🔒 선생님 메뉴</button>
+                <button id="btn-open-action" class="bg-rose-600 hover:bg-rose-700 text-xs font-bold px-2.5 py-2 rounded-lg transition shadow-sm hidden">🚨 결과 대오픈!</button>
+                <button id="btn-reset" class="bg-slate-500 hover:bg-slate-600 text-xs font-bold px-2.5 py-2 rounded-lg transition shadow-sm hidden">🧹 전체 초기화</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl w-full mx-auto p-4 md:p-6 flex-grow">
+        
+        <div id="status-banner" class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-center mb-6 text-blue-900 font-bold text-sm animate-pulse">
+            ⏳ 학생들이 가위바위보 패를 숨겨서 제출하는 중입니다. 청소 시간에 결과가 공개됩니다!
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-bold text-slate-800">✨ 구역 A: 교실 내부 & 칠판</span>
+                        <span id="count-area-1" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">0팀 신청</span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 text-center my-2 border border-dashed border-slate-200">
+                        <span class="text-xs text-slate-400 block mb-1">최종 배정 팀</span>
+                        <span id="winner-area-1" class="text-xl font-bold text-slate-700 title-font tracking-wide">-</span>
+                    </div>
+                </div>
+                <button onclick="openApplyModal('area-1', '교실 내부 & 칠판')" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm py-2 rounded-xl mt-3 transition shadow-sm">지망 및 패 등록</button>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-bold text-slate-800">🌿 구역 B: 복도 & 계단</span>
+                        <span id="count-area-2" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">0팀 신청</span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 text-center my-2 border border-dashed border-slate-200">
+                        <span class="text-xs text-slate-400 block mb-1">최종 배정 팀</span>
+                        <span id="winner-area-2" class="text-xl font-bold text-slate-700 title-font tracking-wide">-</span>
+                    </div>
+                </div>
+                <button onclick="openApplyModal('area-2', '복도 & 계단')" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm py-2 rounded-xl mt-3 transition shadow-sm">지망 및 패 등록</button>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-bold text-slate-800">💧 구역 C: 뒷문 & 쓰레기 분리수거</span>
+                        <span id="count-area-3" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">0팀 신청</span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 text-center my-2 border border-dashed border-slate-200">
+                        <span class="text-xs text-slate-400 block mb-1">최종 배정 팀</span>
+                        <span id="winner-area-3" class="text-xl font-bold text-slate-700 title-font tracking-wide">-</span>
+                    </div>
+                </div>
+                <button onclick="openApplyModal('area-3', '뒷문 & 쓰레기 분리수거')" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm py-2 rounded-xl mt-3 transition shadow-sm">지망 및 패 등록</button>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-bold text-slate-800">☀️ 구역 D: 창틀 & 특별실 거울</span>
+                        <span id="count-area-4" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">0팀 신청</span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 text-center my-2 border border-dashed border-slate-200">
+                        <span class="text-xs text-slate-400 block mb-1">최종 배정 팀</span>
+                        <span id="winner-area-4" class="text-xl font-bold text-slate-700 title-font tracking-wide">-</span>
+                    </div>
+                </div>
+                <button onclick="openApplyModal('area-4', '창틀 & 특별실 거울')" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm py-2 rounded-xl mt-3 transition shadow-sm">지망 및 패 등록</button>
+            </div>
+        </div>
+
+        <section id="admin-panel" class="hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-md">
+            <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1">📋 실시간 접수 명단 및 제출 패 (학생 화면 숨김 상태)</h3>
+            <div class="overflow-x-auto text-xs">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 font-bold text-slate-600">
+                            <th class="p-2 border-b">팀명</th>
+                            <th class="p-2 border-b">팀원 목록</th>
+                            <th class="p-2 border-b text-center">선택 구역</th>
+                            <th class="p-2 border-b text-center">1순위 패</th>
+                            <th class="p-2 border-b text-center">2순위 패</th>
+                            <th class="p-2 border-b text-center">현재상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-apply" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-40">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">청소구역 비밀 지망서</h3>
+            <p class="text-xs text-slate-500 mb-4">선택한 구역: <span id="apply-target-name" class="font-bold text-amber-600"></span></p>
+            
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">우리 조 이름</label>
+                    <input type="text" id="team-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="예: 3조 기동대">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">팀원 1</label>
+                        <input type="text" id="s1" class="w-full border rounded-lg px-3 py-2" placeholder="이름">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">팀원 2</label>
+                        <input type="text" id="s2" class="w-full border rounded-lg px-3 py-2" placeholder="이름">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-blue-700 mb-1.5">✊ 1순위 메인 패 선택</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="selectRPS(1, '✌️')" id="r1-scissors" class="py-2 text-xl border rounded-lg hover:bg-slate-50 transition">✌️</button>
+                        <button type="button" onclick="selectRPS(1, '✊')" id="r1-rock" class="py-2 text-xl border rounded-lg hover:bg-slate-50 transition">✊</button>
+                        <button type="button" onclick="selectRPS(1, '🖐️')" id="r1-paper" class="py-2 text-xl border rounded-lg hover:bg-slate-50 transition">🖐️</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-emerald-700 mb-1.5">✌️ 2순위 백업 패 (비겼을 때 자동 작동)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="selectRPS(2, '✌️')" id="r2-scissors" class="py-2 text-xl border rounded-lg hover:bg-slate-50 transition">✌️</button>
+                        <button type="button" onclick="selectRPS(2, '✊')" id="r2-rock" class="py-2 text-xl border rounded-lg hover:bg-slate-50 transition">✊</button>
+                        <button type="button" onclick="selectRPS(2, '🖐️')" id="r2-paper" class="py-2 text-xl border rounded-lg hover:bg-slate-50 transition">🖐️</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-5">
+                <button id="btn-close-apply" class="px-3 py-1.5 bg-slate-100 rounded-lg font-semibold text-xs">취소</button>
+                <button id="btn-submit-apply" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold text-xs shadow-sm">제출하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-auth" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-40">
+        <div class="bg-white rounded-xl p-5 max-w-xs w-full text-center">
+            <h3 class="font-bold text-slate-800 mb-3">관리자 패스워드</h3>
+            <input type="password" id="admin-password-input" class="w-full border rounded-lg p-2 mb-4 text-center" placeholder="기본번호: 1234">
+            <div class="flex gap-2">
+                <button id="btn-close-auth" class="bg-slate-100 flex-1 py-1 rounded text-xs">취소</button>
+                <button id="btn-submit-auth" class="bg-slate-800 text-white flex-1 py-1 rounded text-xs">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 보낸 주소를 직접 탑재하여 외부 통신망(fetch) 기반으로 작동하도록 수정
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwakuRE7vVdFuIvmpXjF-N-qDNQxBCa9pm65NRiFoJQePuk9k0BNBfWK7oiTXsNKsoZ4Q/exec";
+        
+        let currentSelectedArea = "";
+        let selectedRPS1 = null;
+        let selectedRPS2 = null;
+        let isAdmin = false;
+        let adminPassword = "";
+        
+        window.onload = function() {
+            fetchData();
+            setupEvents();
+        };
+
+        // 1. 구글 웹앱 주소로 현황 데이터 가져오기 (GET 통신)
+        function fetchData() {
+            showLoading(true, "구글 저장소에서 실시간 현황 조회 중...");
+            
+            fetch(`${WEB_APP_URL}?action=getCleaningData`)
+                .then(res => res.json())
+                .then(summary => {
+                    renderSummary(summary);
+                    if (isAdmin) {
+                        fetchAdminTable();
+                    } else {
+                        showLoading(false);
+                    }
+                })
+                .catch(err => {
+                    alert("데이터를 불러오지 못했습니다. 앱스 스크립트 배포 설정을 확인해 주세요.");
+                    showLoading(false);
+                });
+        }
+
+        // 2. 관리자용 상세 데이터 대조 요청 (GET 통신)
+        function fetchAdminTable() {
+            fetch(`${WEB_APP_URL}?action=getAdminData&password=${encodeURIComponent(adminPassword)}`)
+                .then(res => res.json())
+                .then(applicants => {
+                    renderAdminRows(applicants);
+                    showLoading(false);
+                })
+                .catch(err => {
+                    alert("관리자 데이터를 가져오는 데 실패했습니다.");
+                    showLoading(false);
+                });
+        }
+
+        function renderAdminRows(applicants) {
+            const tbody = document.getElementById('admin-table-body');
+            tbody.innerHTML = applicants.length === 0 ? '<tr><td colspan="6" class="p-4 text-center text-slate-400">등록된 조가 없습니다.</td></tr>' : '';
+            applicants.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-2 font-bold">${a.teamName}</td><td class="p-2">${a.s1}, ${a.s2}</td><td class="p-2 text-center font-semibold text-amber-600">${a.pref.replace('area-', '구역 ')}</td><td class="p-2 text-center text-lg">${a.rps1}</td><td class="p-2 text-center text-lg">${a.rps2}</td><td class="p-2 text-center">${a.status}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 화면 전광판 갱신
+        function renderSummary(summary) {
+            const banner = document.getElementById('status-banner');
+            if (summary.isOpened) {
+                banner.className = "bg-rose-600 text-white p-4 rounded-xl text-center mb-6 text-sm font-bold shadow-md title-font tracking-wider";
+                banner.innerText = "📢 오픈 완료! 가위바위보 연쇄 정산에 따른 최종 청소 구역이 배정되었습니다.";
+            } else {
+                banner.className = "bg-blue-50 border border-blue-200 p-4 rounded-xl text-center mb-6 text-blue-900 font-bold text-sm animate-pulse";
+                banner.innerText = "⏳ 학생들이 가위바위보 패를 숨겨서 제출하는 중입니다. 청소 시간에 결과가 공개됩니다!";
+            }
+
+            ["area-1", "area-2", "area-3", "area-4"].forEach(id => {
+                document.getElementById(`count-${id}`).innerText = `${summary[id].count}팀 신청`;
+                const winnerEl = document.getElementById(`winner-${id}`);
+                winnerEl.innerText = summary[id].winner;
+                if (summary[id].winner !== "-" && summary[id].winner.indexOf("🚨") === -1) {
+                    winnerEl.className = "text-xl font-bold text-emerald-600 title-font tracking-wide bg-emerald-50 px-3 py-1 rounded-lg inline-block";
+                } else if (summary[id].winner.indexOf("🚨") !== -1) {
+                    winnerEl.className = "text-sm font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded";
+                } else {
+                    winnerEl.className = "text-xl font-bold text-slate-400 title-font";
+                }
+            });
+        }
+
+        function openApplyModal(areaId, areaName) {
+            currentSelectedArea = areaId;
+            selectedRPS1 = selectedRPS2 = null;
+            document.getElementById('apply-target-name').innerText = areaName;
+            document.getElementById('team-name').value = "";
+            document.getElementById('s1').value = "";
+            document.getElementById('s2').value = "";
+            
+            resetRpsButtons(1); resetRpsButtons(2);
+            document.getElementById('modal-apply').classList.remove('hidden');
+        }
+
+        function selectRPS(round, move) {
+            if (round === 1) {
+                selectedRPS1 = move; resetRpsButtons(1);
+                const target = move === '✌️' ? 'r1-scissors' : (move === '✊' ? 'r1-rock' : 'r1-paper');
+                document.getElementById(target).className = "py-2 text-xl border border-blue-600 bg-blue-50 rounded-lg scale-105 font-bold text-blue-600";
+            } else {
+                selectedRPS2 = move; resetRpsButtons(2);
+                const target = move === '✌️' ? 'r2-scissors' : (move === '✊' ? 'r2-rock' : 'r2-paper');
+                document.getElementById(target).className = "py-2 text-xl border border-emerald-600 bg-emerald-50 rounded-lg scale-105 font-bold text-emerald-600";
+            }
+        }
+
+        function resetRpsButtons(round) {
+            const prefix = round === 1 ? 'r1-' : 'r2-';
+            ['scissors', 'rock', 'paper'].forEach(s => {
+                document.getElementById(prefix + s).className = "py-2 text-xl border rounded-lg hover:bg-slate-50 transition text-slate-700";
+            });
+        }
+
+        // 아이들이 보낼 데이터 전송 양식 (POST 통신)
+        function setupEvents() {
+            document.getElementById('btn-refresh').onclick = fetchData;
+            document.getElementById('btn-close-apply').onclick = () => document.getElementById('modal-apply').classList.add('hidden');
+            
+            document.getElementById('btn-admin-mode').onclick = () => {
+                if (isAdmin) {
+                    isAdmin = false; adminPassword = "";
+                    document.getElementById('admin-panel').classList.add('hidden');
+                    document.getElementById('btn-open-action').classList.add('hidden');
+                    document.getElementById('btn-reset').classList.add('hidden');
+                    document.getElementById('btn-admin-mode').innerText = "🔒 선생님 메뉴";
+                } else {
+                    document.getElementById('modal-auth').classList.remove('hidden');
+                }
+            };
+
+            document.getElementById('btn-close-auth').onclick = () => document.getElementById('modal-auth').classList.add('hidden');
+            
+            document.getElementById('btn-submit-auth').onclick = () => {
+                const pw = document.getElementById('admin-password-input').value;
+                showLoading(true, "인증 확인 중...");
+                
+                // 패스워드 대조를 위한 백엔드 비동기 호출
+                fetch(`${WEB_APP_URL}?action=getAdminData&password=${encodeURIComponent(pw)}`)
+                    .then(res => {
+                        if(!res.ok) throw new Error();
+                        return res.json();
+                    })
+                    .then(applicants => {
+                        isAdmin = true; adminPassword = pw;
+                        document.getElementById('modal-auth').classList.add('hidden');
+                        document.getElementById('btn-admin-mode').innerText = "🔓 학생모드로 전환";
+                        document.getElementById('btn-open-action').classList.remove('hidden');
+                        document.getElementById('btn-reset').classList.remove('hidden');
+                        document.getElementById('admin-panel').classList.remove('hidden');
+                        renderAdminRows(applicants);
+                        showLoading(false);
+                    })
+                    .catch(() => {
+                        alert("패스워드가 유효하지 않거나 권한이 없습니다.");
+                        showLoading(false);
+                    });
+            };
+
+            // 학생 비밀 패 등록 데이터 쏘기
+            document.getElementById('btn-submit-apply').onclick = () => {
+                const team = document.getElementById('team-name').value.trim();
+                const s1 = document.getElementById('s1').value.trim();
+                const s2 = document.getElementById('s2').value.trim();
+                if (!team || !s1 || !s2 || !selectedRPS1 || !selectedRPS2) { alert("모든 빈칸을 채우고 가위바위보 패를 양쪽 다 골라주세요!"); return; }
+                
+                document.getElementById('modal-apply').classList.add('hidden');
+                showLoading(true, "구글 스프레드시트 서버로 안전하게 전송 중...");
+                
+                const formData = new FormData();
+                formData.append("action", "applyCleaning");
+                formData.append("pref", currentSelectedArea);
+                formData.append("teamName", team);
+                formData.append("s1", s1);
+                formData.append("s2", s2);
+                formData.append("rps1", selectedRPS1);
+                formData.append("rps2", selectedRPS2);
+
+                fetch(WEB_APP_URL, { method: "POST", body: formData })
+                    .then(res => res.json())
+                    .then(resData => {
+                        alert(`[${team}] 등록 완료! 청소 시간에 동시 오픈됩니다. 🤫`);
+                        fetchData();
+                    })
+                    .catch(err => {
+                        alert("전송에 실패했습니다. 구글 앱스 스크립트 배포 시 '액세스 권한: 모든 사람'으로 설정했는지 확인하세요.");
+                        showLoading(false);
+                    });
+            };
+
+            // 청소 시간 결과 대오픈 처리 (POST 통신)
+            document.getElementById('btn-open-action').onclick = () => {
+                if (!confirm("정말 청소 시간이 되었나요? 오픈 즉시 1순위 대조 후 무승부 발생 시 2순위 패까지 자동 연쇄 판정합니다!")) return;
+                showLoading(true, "숨겨진 패 오픈 및 1·2순위 정산 연산 중...");
+                
+                const formData = new FormData();
+                formData.append("action", "openResults");
+                formData.append("password", adminPassword);
+
+                fetch(WEB_APP_URL, { method: "POST", body: formData })
+                    .then(res => res.json())
+                    .then(summary => {
+                        renderSummary(summary);
+                        fetchAdminTable();
+                    })
+                    .catch(() => { alert("결과 오픈 정산 처리에 실패했습니다."); showLoading(false); });
+            };
+
+            // 데이터 완전 리셋 (POST 통신)
+            document.getElementById('btn-reset').onclick = () => {
+                if (!confirm("모든 지망 현황과 보관된 가위바위보 패를 완전 파기하시겠습니까?")) return;
+                showLoading(true, "구글 시트 포맷 중...");
+                
+                const formData = new FormData();
+                formData.append("action", "clearAllData");
+                formData.append("password", adminPassword);
+
+                fetch(WEB_APP_URL, { method: "POST", body: formData })
+                    .then(res => res.json())
+                    .then(summary => {
+                        renderSummary(summary);
+                        fetchAdminTable();
+                    })
+                    .catch(() => { alert("리셋 처리에 실패했습니다."); showLoading(false); });
+            };
+        }
+
+        function showLoading(show, text="") {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading-spinner').className = show ? "fixed inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-50" : "hidden";
+        }
+    </script>
+</body>
+</html>
